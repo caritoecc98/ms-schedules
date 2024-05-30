@@ -23,6 +23,11 @@ export class ScheduleController {
     return this.schedulesService.findOne(+id);
   }
 
+  @Get('user/:userId')
+  async findAllByUserId(@Param('userId') userId: number) {
+    return this.schedulesService.findAllByUserId(userId);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.schedulesService.remove(+id);

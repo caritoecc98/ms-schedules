@@ -14,6 +14,9 @@ import {
     @Column()
     userId: number;
 
+    @Column()
+    tipo: string;
+
     @Column({ type: 'date' })
     fecha: Date;
 

@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsDateString, IsString } from 'class-validator';
 
-export class CreateScheduleDto {
+export class findScheduleDto {
   @IsNotEmpty()
   userId: number;
 
@@ -11,7 +11,4 @@ export class CreateScheduleDto {
   @IsDateString()
   fecha: Date;
 
-  @IsNotEmpty()
-  @IsString()
-  hora: string;
 }
