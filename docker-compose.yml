@@ -11,6 +11,6 @@ services:
       MYSQL_USER: user_crud
       MYSQL_PASSWORD: root
     volumes:
-      - ./mysql_schedule:/var/lib/mysql
+      - ./mysql_schedule:/var/lib/mysql_db_schedule
     ports:
       - "3308:3306"
