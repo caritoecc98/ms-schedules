@@ -28,6 +28,15 @@ import {
 
     @UpdateDateColumn({ name: 'updated_at' }) 
     updated_at: Date;
+
+    @Column()
+    latitude: string;
+  
+    @Column()
+    longitude: string;
+  
+    @Column()
+    edit: string;
     
    // @Column({ type: 'date',  default: () => 'CURRENT_TIMESTAMP'})
   //  date: Date;

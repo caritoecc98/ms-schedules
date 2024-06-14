@@ -1,15 +1,17 @@
-import { Controller, Post, Get, Body, Query, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query,Req,Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { SchedulesService } from './schedules.service';
-import { CreateScheduleDto } from './dto/create-schedule.dto';
+import { CreateScheduleDto } from './dto/createSchedule.dto';
 import { AuthGuard } from 'src/auth/guard/auth.guard';
+import { UpdateScheduleDto } from './dto/updateSchedule.dto';
 
 @Controller('schedule')
 export class ScheduleController {
   constructor(private readonly schedulesService: SchedulesService) {}
 
-  //@UseGuards(AuthGuard)
+  @UseGuards(AuthGuard)
   @Post('create')
   create(@Body() createScheduleDto: CreateScheduleDto) {
+    console.log("Create schedule")
     return this.schedulesService.create(createScheduleDto);
   }
 
@@ -36,15 +38,35 @@ export class ScheduleController {
   //    return this.schedulesService.findAllUser(userId,fecha1, fecha2);
   //}
   
-  @Get('admin/range') 
+  //@Get('admin/range') 
+  //async findInRangeAdmin(
+  //  @Query('userId') userId: number,
+  //  @Query('fecha1') fecha1: string,
+  //  @Query('fecha2') fecha2: string,
+  //  @Query('role') role: string,
+  //) {
+  //  return this.schedulesService.scheduleRangeAdmin(userId ,fecha1, fecha2, role);
+  //}
+
+  @Get('rangeSchedules') 
   async findInRangeAdmin(
-    @Query('userId') userId: number,
     @Query('fecha1') fecha1: string,
     @Query('fecha2') fecha2: string,
     @Query('role') role: string,
   ) {
-    return this.schedulesService.scheduleRangeAdmin(userId ,fecha1, fecha2, role);
+  
+    console.log(role)
+    if (role === 'admin') {
+      console.log("admin")
+      console.log(fecha1)
+      console.log(fecha2)
+      return this.schedulesService.scheduleRangeAdmin(fecha1, fecha2);
+    } else {
+      console.log("user")
+      return this.schedulesService.scheduleRangeAdmin(fecha1, fecha2);
+    }
   }
+
 
   @Get('user/range') 
   async findInRange(
@@ -65,10 +87,24 @@ export class ScheduleController {
     return this.schedulesService.findAllByUserId(userId);
   }
 
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.schedulesService.remove(+id);
   }
+
+  @Patch('location/:userId')
+  async updateLocation(@Param('userId') userId: number, @Body() updateUserDto: UpdateScheduleDto) {
+    const schedule= await this.schedulesService.findLastSchedule(userId)
+    return await this.schedulesService.update(schedule.id, updateUserDto);
+  }
+  
+  @Patch(':id')
+  async update(@Param('id') id: number, @Body() updateUserDto: UpdateScheduleDto) {
+    return await this.schedulesService.update(+id, updateUserDto);
+  }
+
+  
 
 
 

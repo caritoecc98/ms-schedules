@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOneOptions,Between,MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
-import { CreateScheduleDto } from './dto/create-schedule.dto';
+import { CreateScheduleDto } from './dto/createSchedule.dto';
 import { Schedule } from './entities/schedule.entity';
 @Injectable()
 export class SchedulesService {
@@ -21,6 +21,7 @@ export class SchedulesService {
     const schedule = await this.scheduleRepository.findOne({ where: { userId, fecha, tipo } });
     console.log(schedule)
     if (schedule) {
+      console.log(('Ya existe un horario de ' + tipo + ' para este usuario a las '+ hora))
       throw new Error('Ya existe un horario de ' + tipo + ' para este usuario a las '+ hora);
     }
     const newSchedule = this.scheduleRepository.create(createScheduleDto);
@@ -68,41 +69,15 @@ export class SchedulesService {
     }
   }
 
-  async findAllUser(userId:number, fecha1:string, fecha2:string): Promise<Schedule[]> {
-    console.log( fecha1);
-    console.log( fecha2);
-
-    const startDate = new Date(fecha1);
-    const endDate = new Date(fecha2);
-
-    console.log( startDate);
-    console.log( endDate);
-    console.log('userId:', userId);
-    const schedulesMayores = await this.scheduleRepository.find({
-      where: [
-        { created_at: MoreThanOrEqual(startDate),userId:userId },
-      ],
-    });
-    console.log(schedulesMayores);
-    const schedulesMenores = await this.scheduleRepository.find({
-      where: [
-        { created_at: LessThanOrEqual(endDate),userId:userId },
-      ],
-    });
-    console.log(schedulesMenores);
-    return schedulesMayores;
-  }
-
-  async scheduleRangeAdmin(userId: number, fecha1: string, fecha2: string, role:string) {
-    if(role==='admin'){
-      return this.scheduleRepository.query(
-        `SELECT * FROM schedule WHERE userId = ? AND fecha BETWEEN ? AND ?`,
-        [userId, fecha1, fecha2],
-      );
-    }
-    else{
-      throw new Error('El usuario no es admin');
-    }
+  async scheduleRangeAdmin( fecha1: string, fecha2: string) {
+    const userId=2
+    console.log(userId)
+    console.log(fecha1)
+    console.log(fecha2)
+    return this.scheduleRepository.query(
+      `SELECT * FROM schedule WHERE userId = ? AND fecha BETWEEN ? AND ?`,
+      [ userId,fecha1, fecha2],
+    );    
   }
 
   async scheduleRange(userId: number, fecha1: string, fecha2: string) {
@@ -116,4 +91,27 @@ export class SchedulesService {
     return `This action removes a #${id} user`;
   }
 
+  async update(userId: number, data: Partial<Schedule>): Promise<void> {
+    try {
+      console.log(data)
+      await this.scheduleRepository.update(userId, data);
+    } catch (error) {
+      console.error("Error al actualizar los datos del registro", error);
+      throw new Error("No se pudo actualizar el registro del usuario.");
+    }
+  }
+
+  async findLastSchedule(userId: number): Promise<Schedule | undefined> {
+    try {
+      const schedule = await this.scheduleRepository.findOne({
+        where: { userId: userId},
+        order: {fecha: 'DESC'},
+      });
+      console.log(schedule)
+      return schedule;
+    } catch (error) {
+      console.error('No existen registros', error);
+      throw error;
+    }
+  }
 }
