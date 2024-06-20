@@ -3,6 +3,8 @@ import { SchedulesService } from './schedules.service';
 import { CreateScheduleDto } from './dto/createSchedule.dto';
 import { AuthGuard } from 'src/auth/guard/auth.guard';
 import { UpdateScheduleDto } from './dto/updateSchedule.dto';
+import { DailyReportForAll } from 'src/workReport/entity/dailyReport.entity';
+import { WorkReport } from 'src/workReport/entity/workReport.entity';
 
 @Controller('schedule')
 export class ScheduleController {
@@ -104,9 +106,54 @@ export class ScheduleController {
     return await this.schedulesService.update(+id, updateUserDto);
   }
 
-  
+  @Patch(':id')
+  async updateSchedule(@Param('id') id: number, @Body() updateScheduleDto: UpdateScheduleDto) {
+    return await this.schedulesService.update(+id, updateScheduleDto);
+  }
 
+  @Post('calculateHours/:id')
+  async calculateHours(@Param('id') id: number) {
+    return await this.schedulesService.calculateHours(+id)
+  }
 
+  @Post('calculateDailyHours')
+  async calculateDailyHours() {
+    return await this.schedulesService.calculateDailyHours()
+  }  
 
-//////
+  @Post('calculateAllUsersHours')
+  async calculateAllUsersHours() {
+    return await this.schedulesService.calculateAllUsersHours()
+  }  
+
+  @Post('updateReport')
+  async updateReport() {
+    return this.schedulesService.updateReport();
+  }
+
+  @Post('workReport')
+  workReport(): Promise<WorkReport[]> {
+    return this.schedulesService.workReport();
+  }
+
+  @Post('dailyReport')
+  dailyReport(): Promise<DailyReportForAll[]> {
+    return this.schedulesService.dailyReport();
+  }
+
+  @Post('workReportRange') 
+  async workReportRange(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    return this.schedulesService.workReportRange(startDate, endDate);
+  }
+
+  @Post('dailyReportRange') 
+  async dailyReportRange(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    return this.schedulesService.dailyReportRange(startDate, endDate);
+  }
 }

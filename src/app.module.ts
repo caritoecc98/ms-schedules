@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SchedulesModule } from './schedule/schedules.module';
+import { WorkReportModule } from './workReport/workReports.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { SchedulesModule } from './schedule/schedules.module';
       synchronize: true,
     }),
   SchedulesModule,
+  WorkReportModule,
   ],
   controllers: [],
   providers: [],
