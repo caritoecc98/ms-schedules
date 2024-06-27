@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SchedulesModule } from './schedule/schedules.module';
 import { WorkReportModule } from './workReport/workReports.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -14,6 +15,10 @@ import { WorkReportModule } from './workReport/workReports.module';
       database: 'db_schedule',
       autoLoadEntities: true,
       synchronize: true,
+    }),
+    ConfigModule.forRoot({
+      isGlobal: true, 
+      envFilePath: '.env', 
     }),
   SchedulesModule,
   WorkReportModule,

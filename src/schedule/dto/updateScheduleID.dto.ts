@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsDateString, IsOptional, IsString } from 'class-validator';
 
-export class UpdateScheduleDto {
+export class UpdateScheduleDtoId {
 
     @IsOptional()
     @IsNotEmpty()

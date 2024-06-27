@@ -1,18 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOneOptions,Between,MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateScheduleDto } from './dto/createSchedule.dto';
 import { Schedule } from './entities/schedule.entity';
-import { findDatesUserId } from './functions/findDatesUserId';
+import { findDatesUserId } from './functions/utilsSchedule/findDatesUserId';
 import { WorkReport } from 'src/workReport/entity/workReport.entity';
-import { CreateWorkReportDto } from '../workReport/dto/createWorkReport.dto';
 import { WorkReportService } from '../workReport/workReports.service';
-import { findDates } from './functions/findDates';
-import * as moment from 'moment';
 import { DailyReportForAll } from 'src/workReport/entity/dailyReport.entity';
-import { CreateDailyReportDto } from 'src/workReport/dto/createDailyReport.dto';
-import { getAllUsers } from './functions/getAllUsers';
-import { date } from 'joi';
+import { getAllUsers } from './functions/utilsSchedule/getAllUsers';
+import { findReportRange } from './functions/utilsReport/findReportRange';
+import { calculateHoursForDate } from './functions/utilsReport/calculateHoursForDate';
+import { calculateDailyHours } from './functions/utilsReport/calculateDailyHours';
 
 @Injectable()
 export class SchedulesService {
@@ -25,11 +23,6 @@ export class SchedulesService {
     private readonly workReportRepository: Repository<WorkReport>,
     private readonly workReportService: WorkReportService,
   ) {}
-  
-  //async create(createScheduleDto: CreateScheduleDto): Promise<Schedule> {
-  //  const schedule = this.scheduleRepository.create(createScheduleDto);
-  //  return this.scheduleRepository.save(schedule);
-  //}
 
   async create(createScheduleDto: CreateScheduleDto): Promise<Schedule> {
     const { userId, tipo,fecha,hora } = createScheduleDto;
@@ -45,9 +38,7 @@ export class SchedulesService {
   }
 
   async findAllByUserId(userId: number): Promise<Schedule[]> {
-    return await this.scheduleRepository.find({
-      where: {userId: userId},
-    });
+    return await this.scheduleRepository.find({where: {userId: userId},});
   }
 
   findAll() {
@@ -62,29 +53,6 @@ export class SchedulesService {
     return await this.scheduleRepository.find();
   }
 
-  async findAllAdmin2(role:string ,fecha1:string, fecha2:string): Promise<Schedule[]> {
-    console.log( fecha1);
-    console.log( fecha2);
-
-    const startDate = new Date(fecha1);
-    const endDate = new Date(fecha2);
-
-    console.log( startDate);
-    console.log( endDate);
-    if(role='admin'){
-      const schedules = await this.scheduleRepository.find({
-        where: [
-          { fecha: MoreThanOrEqual(startDate) },
-          { fecha: LessThanOrEqual(endDate) },
-        ],
-      });
-      return schedules;
-    }
-    else{
-      throw new Error('El usuario no es admin');
-    }
-  }
-
   async scheduleRangeAdmin( fecha1: string, fecha2: string) {
     const userId=2
     console.log(userId)
@@ -97,11 +65,8 @@ export class SchedulesService {
   }
 
   async scheduleRange(userId: number, fecha1: string, fecha2: string) {
-    return this.scheduleRepository.query(
-      `SELECT * FROM schedule WHERE userId = ? AND fecha BETWEEN ? AND ?`,
-      [userId, fecha1, fecha2],
-    );
-  }
+    return this.scheduleRepository.query(`SELECT * FROM schedule WHERE userId = ? AND fecha BETWEEN ? AND ?`,
+      [userId, fecha1, fecha2], );}
 
   remove(id: number) {
     return `This action removes a #${id} user`;
@@ -148,9 +113,7 @@ export class SchedulesService {
   async findAllUsers(): Promise<number[]> {
     return getAllUsers(this.scheduleRepository);
   }
-
-
-
+  
   async updateReport(): Promise<void> {
     try {
       await this.calculateAllUsersHours();
@@ -177,42 +140,20 @@ export class SchedulesService {
     }
   }
 
+  async getWorkReport(id: number): Promise<WorkReport[]> {
+    return this.scheduleRepository.query(`SELECT * FROM schedule WHERE userId`,[id])
+  }
 
   async calculateHours(userId: number): Promise<void> {
     console.log("Calculando horas");
     try {
       const dates = await findDatesUserId(this.scheduleRepository, userId);
-      console.log('Fechas obtenidas:', dates);
+      console.log('Fechas obtenidas (calculate hours):', dates);
       for (const date of dates) {
-        const scheduleE = await this.scheduleRepository.findOne({
-          where: { userId: userId, fecha:date, tipo:"entrada"},
-        });
-        const scheduleS = await this.scheduleRepository.findOne({
-          where: { userId: userId, fecha:date, tipo:"salida"},
-        });
-        
-        console.log(scheduleE);
-      if (scheduleE && scheduleS) {
-        const horaE = moment(scheduleE.hora, 'HH:mm:ss');
-        const horaS = moment(scheduleS.hora, 'HH:mm:ss');
-
-        const duration = moment.duration(horaS.diff(horaE));
-        const minutesDifference = duration.asMinutes();
-        console.log(`Diferencia en minutos: ${minutesDifference}`);
-        const horasFloat=Number((minutesDifference/60).toFixed(2))
-        console.log(horasFloat)
-        const createWorkReportDto = {
-            userId,
-            dateReport: date,
-            hours: horasFloat,
-            minutes: minutesDifference
-          };
-          const workReport = await this.workReportService.createWorkReport(createWorkReportDto)
-        }
+        await calculateHoursForDate(this.scheduleRepository, this.workReportService, userId, date);
       }
       console.log('Horas actualizadas');
-    } 
-    catch (error) {
+    }catch (error) {
       console.error('Error al calcular las horas:', error);
       throw new Error('No se pudieron calcular las horas.');
     }
@@ -221,23 +162,7 @@ export class SchedulesService {
   async calculateDailyHours(): Promise<void> {
     console.log("Calculando horas");
     try {
-      await this.dailyReportForAllRepository.clear();
-      const query = `
-        SELECT dateReport, SUM(hours) as totalHours, SUM(minutes) as totalMinutes
-        FROM work_report
-        GROUP BY dateReport
-      `;
-      const reports = await this.workReportRepository.query(query);
-      console.log('Resultados obtenidos:', reports);
-      
-      for (const report of reports) {
-        const newDailyReport = new DailyReportForAll();
-        newDailyReport.dateReport = report.dateReport;
-        newDailyReport.hours = report.totalHours;
-        newDailyReport.minutes = report.totalMinutes;
-        await this.dailyReportForAllRepository.save(newDailyReport);
-        console.log(`Reporte diario creado para la fecha ${report.dateReport}: ${report.totalHours} horas`);
-      }
+      await calculateDailyHours(this.dailyReportForAllRepository, this.workReportRepository);
     } 
     catch (error) {
       console.error('Error al calcular las horas:', error);
@@ -254,55 +179,11 @@ export class SchedulesService {
   }
   
   async workReportRange(startDate: string, endDate: string) {
-    const start= new Date(startDate)
-    const end=new Date(endDate)
-    try {
-      const reports= await this.workReportRepository.find();
-      console.log('todos xd');
-      console.log('Resultados obtenidos:', reports);
-      const reportsInRange = [];
-      for(const report of reports){
-        const format=new Date(report.dateReport)       
-        console.log(format) 
-        console.log(start)
-        console.log(end)
-        if(format>= start && format<= end ){
-          console.log("IF xd")
-          console.log(report)
-          reportsInRange.push(report);
-        }
-      }
-
-      return reportsInRange;
-    } catch (error) {
-      console.error('Error al consultar el rango de work_report:', error);
-      throw new Error('Error al consultar el rango de work_report');
-    }
+    return findReportRange(this.workReportRepository, startDate, endDate);
   }
 
+
   async dailyReportRange(startDate: string, endDate: string) {
-    const start= new Date(startDate)
-    const end=new Date(endDate)
-    try {
-      const reports= await this.dailyReportForAllRepository.find();
-      console.log('todos xd');
-      console.log('Resultados obtenidos:', reports);
-      const reportsInRange = [];
-      for(const report of reports){
-        const format=new Date(report.dateReport)       
-        console.log(format) 
-        console.log(start)
-        console.log(end)
-        if(format>= start && format<= end ){
-          console.log("IF xd")
-          console.log(reports)
-          reportsInRange.push(report);
-        }
-      }
-      return reportsInRange;
-    } catch (error) {
-      console.error('Error al consultar el rango de work_report:', error);
-      throw new Error('Error al consultar el rango de work_report');
-    }
+    return findReportRange(this.dailyReportForAllRepository, startDate, endDate);
   }
 }

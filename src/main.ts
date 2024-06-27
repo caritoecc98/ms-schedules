@@ -1,13 +1,13 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { checkMS } from './checkMS';
+import * as dotenv from 'dotenv';
 import { checkReg } from './checkRegister';
 
 
 async function bootstrap() {
+  dotenv.config();
   const app = await NestFactory.create(AppModule);
-
   app.enableCors({
     //origin: 'http://192.168.0.108:8081',
     origin: 'http://localhost:8081',

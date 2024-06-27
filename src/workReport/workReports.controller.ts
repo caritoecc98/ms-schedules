@@ -3,6 +3,7 @@ import { WorkReportService } from './workReports.service';
 import { CreateWorkReportDto } from './dto/createWorkReport.dto';
 import { AuthGuard } from 'src/auth/guard/auth.guard';
 import { SchedulesService } from 'src/schedule/schedules.service';
+import { WorkReport } from './entity/workReport.entity';
 
 @Controller('workReport')
 export class WorkReportController {
@@ -22,4 +23,13 @@ export class WorkReportController {
     return this.workReportService.findAll();
   }
 
+  @Get('getWorkReportUser') 
+  async getWorkReportUser(
+    @Query('userId') userId: number,
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string
+  ) {
+    console.log("getttttt")
+    return this.workReportService.getWorkReportUser(userId ,startDate, endDate);
+  }
 }

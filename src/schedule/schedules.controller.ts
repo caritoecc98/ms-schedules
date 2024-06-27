@@ -3,14 +3,17 @@ import { SchedulesService } from './schedules.service';
 import { CreateScheduleDto } from './dto/createSchedule.dto';
 import { AuthGuard } from 'src/auth/guard/auth.guard';
 import { UpdateScheduleDto } from './dto/updateSchedule.dto';
+import { UpdateScheduleDtoId } from './dto/updateScheduleId.dto';
 import { DailyReportForAll } from 'src/workReport/entity/dailyReport.entity';
 import { WorkReport } from 'src/workReport/entity/workReport.entity';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { AuthGuardSchedule } from 'src/auth/guard/authSchedule.guard';
 
 @Controller('schedule')
 export class ScheduleController {
   constructor(private readonly schedulesService: SchedulesService) {}
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuardSchedule)
   @Post('create')
   create(@Body() createScheduleDto: CreateScheduleDto) {
     console.log("Create schedule")
@@ -22,33 +25,10 @@ export class ScheduleController {
     return this.schedulesService.findAll();
   }
 
-  //Get para mostrar todos los registros, falta crear el guards
   @Get('admin/allSchedules')
   async findAllAdmin() {
     return this.schedulesService.findAllAdmin();
   }
-
-  @Get('admin/allSchedules2')
-  async findAllAdmin2(@Query() query: { role:string, fecha1: string, fecha2: string }) {
-      const { role, fecha1, fecha2 } = query;
-      return this.schedulesService.findAllAdmin2(role, fecha1, fecha2);
-  }
-
-  //@Get('user/allSchedules')
-  //async findAllUser(@Body() body: { userId : number, fecha1: string, fecha2: string }) {
-  ///    const { userId, fecha1, fecha2 } = body;
-  //    return this.schedulesService.findAllUser(userId,fecha1, fecha2);
-  //}
-  
-  //@Get('admin/range') 
-  //async findInRangeAdmin(
-  //  @Query('userId') userId: number,
-  //  @Query('fecha1') fecha1: string,
-  //  @Query('fecha2') fecha2: string,
-  //  @Query('role') role: string,
-  //) {
-  //  return this.schedulesService.scheduleRangeAdmin(userId ,fecha1, fecha2, role);
-  //}
 
   @Get('rangeSchedules') 
   async findInRangeAdmin(
@@ -68,7 +48,6 @@ export class ScheduleController {
       return this.schedulesService.scheduleRangeAdmin(fecha1, fecha2);
     }
   }
-
 
   @Get('user/range') 
   async findInRange(
@@ -106,12 +85,17 @@ export class ScheduleController {
     return await this.schedulesService.update(+id, updateUserDto);
   }
 
-  @Patch(':id')
-  async updateSchedule(@Param('id') id: number, @Body() updateScheduleDto: UpdateScheduleDto) {
-    return await this.schedulesService.update(+id, updateScheduleDto);
+  @Patch('update/:id')
+  async updateSchedule(@Param('id') id: number, @Body() updateScheduleDtoId: UpdateScheduleDtoId) {
+    return await this.schedulesService.update(+id, updateScheduleDtoId);
   }
 
-  @Post('calculateHours/:id')
+  @Get('getWorkReport/:id')
+  async getWorkReport(@Param('id') id: number) {
+    return await this.schedulesService.getWorkReport(+id)
+  }
+
+  @Post('Hours/:id')
   async calculateHours(@Param('id') id: number) {
     return await this.schedulesService.calculateHours(+id)
   }

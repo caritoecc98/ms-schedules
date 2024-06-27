@@ -4,6 +4,7 @@ import { Repository, FindOneOptions,Between,MoreThanOrEqual, LessThanOrEqual } f
 import { CreateWorkReportDto } from './dto/CreateWorkReport.dto';
 import { WorkReport } from './entity/workReport.entity';
 import { Schedule } from 'src/schedule/entities/schedule.entity';
+import { findReportRangeUserID } from 'src/schedule/functions/utilsReport/findReportRangeUserID';
 
 @Injectable()
 export class WorkReportService {
@@ -37,8 +38,11 @@ export class WorkReportService {
     return `This action returns a #${id} user`;
   }
 
-  findOneByUserId(id: number, fecha: Date) {
+  getWorkReportUser(userId: number, startDate: string, endDate: string) {
+    return findReportRangeUserID(this.workReportRepository,userId, startDate, endDate);
+  }
 
+  getReportUser(id: number) {
     return `This action returns a #${id} user`;
   }
 }
