@@ -182,7 +182,6 @@ export class SchedulesService {
     return findReportRange(this.workReportRepository, startDate, endDate);
   }
 
-
   async dailyReportRange(startDate: string, endDate: string) {
     return findReportRange(this.dailyReportForAllRepository, startDate, endDate);
   }

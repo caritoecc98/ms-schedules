@@ -8,6 +8,7 @@ import { DailyReportForAll } from 'src/workReport/entity/dailyReport.entity';
 import { WorkReport } from 'src/workReport/entity/workReport.entity';
 import { RolesGuard } from 'src/auth/guard/roles.guard';
 import { AuthGuardSchedule } from 'src/auth/guard/authSchedule.guard';
+import { Admin } from 'typeorm';
 
 @Controller('schedule')
 export class ScheduleController {
@@ -20,42 +21,45 @@ export class ScheduleController {
     return this.schedulesService.create(createScheduleDto);
   }
 
+  @UseGuards(RolesGuard)
   @Get()
   findAll() {
     return this.schedulesService.findAll();
   }
-
+  
+  @UseGuards(RolesGuard)
   @Get('admin/allSchedules')
   async findAllAdmin() {
     return this.schedulesService.findAllAdmin();
   }
 
+  @UseGuards(RolesGuard)
   @Get('rangeSchedules') 
   async findInRangeAdmin(
-    @Query('fecha1') fecha1: string,
-    @Query('fecha2') fecha2: string,
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
     @Query('role') role: string,
   ) {
   
     console.log(role)
     if (role === 'admin') {
       console.log("admin")
-      console.log(fecha1)
-      console.log(fecha2)
-      return this.schedulesService.scheduleRangeAdmin(fecha1, fecha2);
+      console.log(startDate)
+      console.log(endDate)
+      return this.schedulesService.scheduleRangeAdmin(startDate, endDate);
     } else {
       console.log("user")
-      return this.schedulesService.scheduleRangeAdmin(fecha1, fecha2);
+      return this.schedulesService.scheduleRangeAdmin(startDate, endDate);
     }
   }
 
   @Get('user/range') 
   async findInRange(
     @Query('userId') userId: number,
-    @Query('fecha1') fecha1: string,
-    @Query('fecha2') fecha2: string
+    @Query('fecha1') startDate: string,
+    @Query('fecha2') endDate: string
   ) {
-    return this.schedulesService.scheduleRange(userId ,fecha1, fecha2);
+    return this.schedulesService.scheduleRange(userId ,startDate, endDate);
   }
 
   @Get(':id')
